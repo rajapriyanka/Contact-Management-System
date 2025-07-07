@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${contact.id != null} ? 'Edit Contact - Contact Management' : 'Add Contact - Contact Management'">Contact Management</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-address-book"></i> Contact Management System</h1>
+                <p>Organize and manage your contacts efficiently</p>
+            </div>
+        </header>
+
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb">
+            <a href="/contacts"><i class="fas fa-home"></i> Contacts</a>
+            <span class="separator">/</span>
+            <span th:text="${contact.id != null} ? 'Edit Contact' : 'Add Contact'">Add Contact</span>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="form-container">
+            <div class="form-header">
+                <h2>
+                    <i th:class="${contact.id != null} ? 'fas fa-user-edit' : 'fas fa-user-plus'"></i>
+                    <span th:text="${contact.id != null} ? 'Edit Contact' : 'Add New Contact'">Add New Contact</span>
+                </h2>
+                <p th:text="${contact.id != null} ? 'Update the contact information below.' : 'Fill in the details to add a new contact to your directory.'">
+                    Fill in the details to add a new contact to your directory.
+                </p>
+            </div>
+
+            <!-- Success/Error Messages -->
+            <div th:if="${successMessage}" class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                <span th:text="${successMessage}">Success message</span>
+            </div>
+
+            <div th:if="${errorMessage}" class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <span th:text="${errorMessage}">Error message</span>
+            </div>
+
+            <!-- Contact Form -->
+            <form th:action="@{/contacts/save}" method="post" th:object="${contact}" class="contact-form" novalidate>
+                <input type="hidden" th:field="*{id}" />
+                
+                <!-- Name Fields -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName" class="required">
+                            <i class="fas fa-user"></i> First Name
+                        </label>
+                        <input type="text" 
+                               id="firstName" 
+                               th:field="*{firstName}" 
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('firstName')} ? 'error' : ''"
+                               required 
+                               minlength="2" 
+                               maxlength="50"
+                               placeholder="Enter first name"
+                               title="First name should contain only letters and spaces, 2-50 characters"
+                               oninput="validateNameInput(this)"
+                               onkeypress="return allowOnlyLetters(event)"
+                               onpaste="return handleNamePaste(event)">
+                        
+                        <!-- Server-side error message -->
+                        <div class="error-message" th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            First name error
+                        </div>
+                        
+                        <!-- Client-side validation messages -->
+                        <div class="error-message" id="firstName-error">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span id="firstName-error-text">Please enter a valid first name</span>
+                        </div>
+                        <div class="success-message" id="firstName-success">
+                            <i class="fas fa-check-circle"></i>
+                            Valid first name
+                        </div>
+                        <div class="field-hint">2-50 characters, letters and spaces only</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lastName" class="required">
+                            <i class="fas fa-user"></i> Last Name
+                        </label>
+                        <input type="text" 
+                               id="lastName" 
+                               th:field="*{lastName}" 
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('lastName')} ? 'error' : ''"
+                               required 
+                               minlength="2" 
+                               maxlength="50"
+                               placeholder="Enter last name"
+                               title="Last name should contain only letters and spaces, 2-50 characters"
+                               oninput="validateNameInput(this)"
+                               onkeypress="return allowOnlyLetters(event)"
+                               onpaste="return handleNamePaste(event)">
+                        
+                        <!-- Server-side error message -->
+                        <div class="error-message" th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Last name error
+                        </div>
+                        
+                        <!-- Client-side validation messages -->
+                        <div class="error-message" id="lastName-error">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span id="lastName-error-text">Please enter a valid last name</span>
+                        </div>
+                        <div class="success-message" id="lastName-success">
+                            <i class="fas fa-check-circle"></i>
+                            Valid last name
+                        </div>
+                        <div class="field-hint">2-50 characters, letters and spaces only</div>
+                    </div>
+                </div>
+                
+                <!-- Email Field -->
+                <div class="form-group">
+                    <label for="emailId" class="required">
+                        <i class="fas fa-envelope"></i> Email Address
+                    </label>
+                    <input type="email" 
+                           id="emailId" 
+                           th:field="*{emailId}" 
+                           class="form-control"
+                           th:classappend="${#fields.hasErrors('emailId')} ? 'error' : ''"
+                           required 
+                           maxlength="100"
+                           placeholder="Enter email address (e.g., john@example.com)"
+                           title="Please enter a valid email address"
+                           oninput="validateEmailInput(this)">
+                    
+                    <!-- Server-side error message -->
+                    <div class="error-message" th:if="${#fields.hasErrors('emailId')}" th:errors="*{emailId}">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Email error
+                    </div>
+                    
+                    <!-- Client-side validation messages -->
+                    <div class="error-message" id="emailId-error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span id="emailId-error-text">Please enter a valid email address</span>
+                    </div>
+                    <div class="success-message" id="emailId-success">
+                        <i class="fas fa-check-circle"></i>
+                        Valid email address
+                    </div>
+                    <div class="field-hint">Valid email format required (e.g., user@domain.com)</div>
+                </div>
+                
+                <!-- Phone Field -->
+                <div class="form-group">
+                    <label for="phoneNumber" class="required">
+                        <i class="fas fa-phone"></i> Phone Number
+                    </label>
+                    <input type="tel" 
+                           id="phoneNumber" 
+                           th:field="*{phoneNumber}" 
+                           class="form-control"
+                           th:classappend="${#fields.hasErrors('phoneNumber')} ? 'error' : ''"
+                           required 
+                           minlength="10" 
+                           maxlength="15"
+                           placeholder="Enter phone number (e.g., +1-234-567-8900, cannot start with 0)"
+                           title="Phone number should be 10-15 digits, may include +, spaces, hyphens, or parentheses"
+                           oninput="validatePhoneInput(this)"
+                           onkeypress="return allowOnlyPhoneChars(event)"
+                           onpaste="return handlePhonePaste(event)">
+                    
+                    <!-- Server-side error message -->
+                    <div class="error-message" th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Phone number error
+                    </div>
+                    
+                    <!-- Client-side validation messages -->
+                    <div class="error-message" id="phoneNumber-error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span id="phoneNumber-error-text">Please enter a valid phone number</span>
+                    </div>
+                    <div class="success-message" id="phoneNumber-success">
+                        <i class="fas fa-check-circle"></i>
+                        Valid phone number
+                    </div>
+                    <div class="field-hint">10-15 digits, cannot start with zero, international format accepted (+, -, spaces, parentheses allowed)</div>
+                </div>
+                
+                <!-- Address Field -->
+                <div class="form-group">
+                    <label for="address" class="required">
+                        <i class="fas fa-map-marker-alt"></i> Address
+                    </label>
+                    <textarea id="address" 
+                              th:field="*{address}" 
+                              class="form-control"
+                              th:classappend="${#fields.hasErrors('address')} ? 'error' : ''"
+                              rows="3" 
+                              maxlength="200"
+                              placeholder="Enter full address"
+                              title="Address should be less than 200 characters"
+                              oninput="validateAddressInput(this)"></textarea>
+                    
+                    <!-- Server-side error message -->
+                    <div class="error-message" th:if="${#fields.hasErrors('address')}" th:errors="*{address}">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Address error
+                    </div>
+                    
+                    <!-- Client-side validation messages -->
+                    <div class="error-message" id="address-error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span id="address-error-text">Address is too long</span>
+                    </div>
+                    <div class="success-message" id="address-success">
+                        <i class="fas fa-check-circle"></i>
+                        Valid address
+                    </div>
+                    <div class="field-hint">Required, up to 200 characters</div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="fas fa-save"></i>
+                        <span th:text="${contact.id != null} ? 'Update Contact' : 'Save Contact'">Save Contact</span>
+                    </button>
+                    <a href="/contacts" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Validation state object
+        const validationState = {
+            firstName: false,
+            lastName: false,
+            emailId: false,
+            phoneNumber: false,
+            address: false // Address is now required
+        };
+
+        // Allow only letters and spaces for name fields
+        function allowOnlyLetters(event) {
+            const char = String.fromCharCode(event.which);
+            if (!/[a-zA-Z\s]/.test(char)) {
+                event.preventDefault();
+                shakeInput(event.target);
+                return false;
+            }
+            return true;
+        }
+        
+        // Allow only phone characters (numbers, +, -, spaces, parentheses)
+        function allowOnlyPhoneChars(event) {
+            const char = String.fromCharCode(event.which);
+            if (!/[0-9+\-\s()]/.test(char)) {
+                event.preventDefault();
+                shakeInput(event.target);
+                return false;
+            }
+            return true;
+        }
+        
+        // Handle paste events for name fields
+        function handleNamePaste(event) {
+            event.preventDefault();
+            const paste = (event.clipboardData || window.clipboardData).getData('text');
+            const cleanedPaste = paste.replace(/[^a-zA-Z\s]/g, '');
+            
+            if (cleanedPaste !== paste) {
+                shakeInput(event.target);
+            }
+            
+            const currentValue = event.target.value;
+            const cursorPosition = event.target.selectionStart;
+            const newValue = currentValue.slice(0, cursorPosition) + cleanedPaste + currentValue.slice(event.target.selectionEnd);
+            
+            event.target.value = newValue;
+            event.target.setSelectionRange(cursorPosition + cleanedPaste.length, cursorPosition + cleanedPaste.length);
+            
+            validateNameInput(event.target);
+            return false;
+        }
+        
+        // Handle paste events for phone field
+        function handlePhonePaste(event) {
+            event.preventDefault();
+            const paste = (event.clipboardData || window.clipboardData).getData('text');
+            const cleanedPaste = paste.replace(/[^0-9+\-\s()]/g, '');
+            
+            if (cleanedPaste !== paste) {
+                shakeInput(event.target);
+            }
+            
+            const currentValue = event.target.value;
+            const cursorPosition = event.target.selectionStart;
+            const newValue = currentValue.slice(0, cursorPosition) + cleanedPaste + currentValue.slice(event.target.selectionEnd);
+            
+            event.target.value = newValue;
+            event.target.setSelectionRange(cursorPosition + cleanedPaste.length, cursorPosition + cleanedPaste.length);
+            
+            validatePhoneInput(event.target);
+            return false;
+        }
+        
+        // Shake animation for invalid input
+        function shakeInput(input) {
+            input.classList.add('shake');
+            setTimeout(() => {
+                input.classList.remove('shake');
+            }, 300);
+        }
+        
+        // Validate name input
+        function validateNameInput(input) {
+            const value = input.value.trim();
+            const fieldId = input.id;
+            let isValid = false;
+            let errorMessage = '';
+            
+            if (value.length === 0) {
+                errorMessage = `${fieldId === 'firstName' ? 'First' : 'Last'} name is required`;
+            } else if (value.length < 2) {
+                errorMessage = `${fieldId === 'firstName' ? 'First' : 'Last'} name must be at least 2 characters`;
+            } else if (value.length > 50) {
+                errorMessage = `${fieldId === 'firstName' ? 'First' : 'Last'} name must be less than 50 characters`;
+            } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+                errorMessage = `${fieldId === 'firstName' ? 'First' : 'Last'} name can only contain letters and spaces`;
+            } else {
+                isValid = true;
+            }
+            
+            validationState[fieldId] = isValid;
+            updateFieldValidation(input, isValid, errorMessage);
+        }
+        
+        // Validate email input
+        function validateEmailInput(input) {
+            const value = input.value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            let isValid = false;
+            let errorMessage = '';
+            
+            if (value.length === 0) {
+                errorMessage = 'Email address is required';
+            } else if (value.length > 100) {
+                errorMessage = 'Email address must be less than 100 characters';
+            } else if (!emailRegex.test(value)) {
+                errorMessage = 'Please enter a valid email address';
+            } else {
+                isValid = true;
+            }
+            
+            validationState.emailId = isValid;
+            updateFieldValidation(input, isValid, errorMessage);
+        }
+        
+        // Validate phone input
+        function validatePhoneInput(input) {
+            const value = input.value.trim();
+            let isValid = false;
+            let errorMessage = '';
+            
+            // Remove all non-digit characters to count actual digits
+            const digitsOnly = value.replace(/[^0-9]/g, '');
+            
+            if (value.length === 0) {
+                errorMessage = 'Phone number is required';
+            } else if (digitsOnly.length < 10) {
+                errorMessage = 'Phone number must have at least 10 digits';
+            } else if (digitsOnly.length > 15) {
+                errorMessage = 'Phone number must have no more than 15 digits';
+            } else if (!/^[+]?[1-9][0-9\s\-()]*$/.test(value)) {
+                errorMessage = 'Phone number cannot start with zero and can only contain numbers, +, -, spaces, and parentheses';
+            } else {
+                isValid = true;
+            }
+            
+            validationState.phoneNumber = isValid;
+            updateFieldValidation(input, isValid, errorMessage);
+        }
+        
+        // Validate address input
+        function validateAddressInput(input) {
+            const value = input.value.trim();
+            let isValid = false;
+            let errorMessage = '';
+            
+            if (value.length === 0) {
+                errorMessage = 'Address is required';
+            } else if (value.length > 200) {
+                errorMessage = 'Address must be less than 200 characters';
+            } else {
+                isValid = true;
+            }
+            
+            validationState.address = isValid;
+            updateFieldValidation(input, isValid, errorMessage);
+        }
+        
+        // Update field validation state
+        function updateFieldValidation(input, isValid, errorMessage = '') {
+            const fieldId = input.id;
+            const successMsg = document.getElementById(fieldId + '-success');
+            const errorMsg = document.getElementById(fieldId + '-error');
+            const errorText = document.getElementById(fieldId + '-error-text');
+            
+            // Remove previous validation classes
+            input.classList.remove('error', 'valid');
+            
+            if (isValid && input.value.trim().length > 0) {
+                input.classList.add('valid');
+                if (successMsg) successMsg.classList.add('show');
+                if (errorMsg) errorMsg.classList.remove('show');
+            } else if (input.value.trim().length > 0 || !isValid) {
+                input.classList.add('error');
+                if (errorMsg) {
+                    errorMsg.classList.add('show');
+                    if (errorText && errorMessage) {
+                        errorText.textContent = errorMessage;
+                    }
+                }
+                if (successMsg) successMsg.classList.remove('show');
+            } else {
+                // Empty field - remove all validation indicators
+                if (successMsg) successMsg.classList.remove('show');
+                if (errorMsg) errorMsg.classList.remove('show');
+            }
+            
+            updateSubmitButton();
+        }
+        
+        // Update submit button state
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submitBtn');
+            const allValid = Object.values(validationState).every(valid => valid);
+            
+            if (allValid) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.6';
+            }
+        }
+        
+        // Check if all required fields have values
+        function checkRequiredFields() {
+            const requiredFields = ['firstName', 'lastName', 'emailId', 'phoneNumber', 'address'];
+            return requiredFields.every(fieldId => {
+                const field = document.getElementById(fieldId);
+                return field && field.value.trim().length > 0;
+            });
+        }
+        
+        // Initialize validation on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('.contact-form');
+            const inputs = form.querySelectorAll('input, textarea');
+            
+            // Initial validation for existing values (important for edit mode)
+            inputs.forEach(input => {
+                if (input.value && input.value.trim().length > 0) {
+                    switch(input.id) {
+                        case 'firstName':
+                        case 'lastName':
+                            validateNameInput(input);
+                            break;
+                        case 'emailId':
+                            validateEmailInput(input);
+                            break;
+                        case 'phoneNumber':
+                            validatePhoneInput(input);
+                            break;
+                        case 'address':
+                            validateAddressInput(input);
+                            break;
+                    }
+                }
+            });
+            
+            // Add blur event listeners for validation
+            inputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    switch(this.id) {
+                        case 'firstName':
+                        case 'lastName':
+                            validateNameInput(this);
+                            break;
+                        case 'emailId':
+                            validateEmailInput(this);
+                            break;
+                        case 'phoneNumber':
+                            validatePhoneInput(this);
+                            break;
+                        case 'address':
+                            validateAddressInput(this);
+                            break;
+                    }
+                });
+            });
+            
+            // Initial submit button state
+            updateSubmitButton();
+            
+            // Form submission validation
+            form.addEventListener('submit', function(e) {
+                let isFormValid = true;
+                const requiredInputs = form.querySelectorAll('input[required], textarea[required]');
+                
+                // Validate all fields before submission
+                requiredInputs.forEach(input => {
+                    switch(input.id) {
+                        case 'firstName':
+                        case 'lastName':
+                            validateNameInput(input);
+                            break;
+                        case 'emailId':
+                            validateEmailInput(input);
+                            break;
+                        case 'phoneNumber':
+                            validatePhoneInput(input);
+                            break;
+                        case 'address':
+                            validateAddressInput(input);
+                            break;
+                    }
+                    
+                    if (!validationState[input.id]) {
+                        isFormValid = false;
+                        shakeInput(input);
+                    }
+                });
+                
+                if (!isFormValid) {
+                    e.preventDefault();
+                    alert('Please fill in all required fields correctly before submitting.');
+                    
+                    // Focus on first invalid field
+                    const firstInvalidField = form.querySelector('.form-control.error');
+                    if (firstInvalidField) {
+                        firstInvalidField.focus();
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

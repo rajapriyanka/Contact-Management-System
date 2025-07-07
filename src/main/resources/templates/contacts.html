@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Management System</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-address-book"></i> Contact Management System</h1>
+                <p>Organize and manage your contacts efficiently</p>
+            </div>
+        </header>
+
+        <!-- Enhanced Stats Section -->
+        <div class="stats-section">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-number" th:text="${#lists.size(contacts)}">0</span>
+                    <span class="stat-label">Total Contacts</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-number">Active</span>
+                    <span class="stat-label">Status</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-plus"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-number" th:text="${#temporals.format(#temporals.createNow(), 'MMM yyyy')}">Jan 2024</span>
+                    <span class="stat-label">This Month</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="content-header">
+                <h2><i class="fas fa-list"></i> Contact Directory</h2>
+                <div class="header-actions">
+                    <button class="btn btn-outline" onclick="exportContacts()" title="Export Contacts">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                    <a href="/contacts/add" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Contact
+                    </a>
+                </div>
+            </div>
+
+            <!-- Enhanced Search Section -->
+            <div class="search-section">
+                <div class="search-controls">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Search contacts by name, email, or phone..." 
+                               onkeyup="filterContacts()">
+                        <button class="clear-search" onclick="clearSearch()" title="Clear Search">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="view-toggle">
+                        <button class="view-btn active" onclick="toggleView('grid')" title="Grid View">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button class="view-btn" onclick="toggleView('list')" title="List View">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contacts Display -->
+            <div class="table-container">
+                <div th:if="${#lists.isEmpty(contacts)}" class="no-contacts">
+                    <div class="no-contacts-content">
+                        <i class="fas fa-address-book"></i>
+                        <h3>No Contacts Found</h3>
+                        <p>Start building your contact list by adding your first contact.</p>
+                        <a href="/contacts/add" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Your First Contact
+                        </a>
+                    </div>
+                </div>
+
+                <div th:if="${!#lists.isEmpty(contacts)}" class="contacts-grid" id="contactsContainer">
+                    <div th:each="contact, stat : ${contacts}" class="contact-card" 
+                         th:data-name="${contact.firstName + ' ' + contact.lastName}"
+                         th:data-email="${contact.emailId}"
+                         th:data-phone="${contact.phoneNumber}">
+                        
+                        <div class="contact-header">
+                            <div class="contact-avatar">
+                                <span th:text="${#strings.substring(contact.firstName, 0, 1) + #strings.substring(contact.lastName, 0, 1)}">JD</span>
+                            </div>
+                            <div class="contact-info">
+                                <h3 class="contact-name" th:text="${contact.firstName + ' ' + contact.lastName}">John Doe</h3>
+                                <span class="contact-id" th:text="'ID: #' + ${contact.id}">ID: #1</span>
+                            </div>
+                            <div class="contact-actions">
+                                <button class="btn btn-sm btn-outline" onclick="copyContact(this)" title="Copy Contact Info">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                                <a th:href="@{'/contacts/edit/' + ${contact.id}}" class="btn btn-sm btn-info" title="Edit Contact">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a th:href="@{'/contacts/delete/' + ${contact.id}}" 
+                                   class="btn btn-sm btn-danger" 
+                                   title="Delete Contact"
+                                   onclick="return confirm('Are you sure you want to delete this contact? This action cannot be undone.')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="contact-details">
+                            <div class="contact-detail">
+                                <i class="fas fa-envelope"></i>
+                                <span th:text="${contact.emailId}">john@example.com</span>
+                            </div>
+                            <div class="contact-detail">
+                                <i class="fas fa-phone"></i>
+                                <span th:text="${contact.phoneNumber}">+1234567890</span>
+                            </div>
+                            <div class="contact-detail" th:if="${contact.address != null and !#strings.isEmpty(contact.address)}">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span th:text="${contact.address}">123 Main St, City</span>
+                            </div>
+                        </div>
+
+                        <!-- Hidden data for export -->
+                        <div class="contact-data" style="display: none;"
+                             th:data-firstname="${contact.firstName}"
+                             th:data-lastname="${contact.lastName}"
+                             th:data-email="${contact.emailId}"
+                             th:data-phone="${contact.phoneNumber}"
+                             th:data-address="${contact.address}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function filterContacts() {
+            const searchInput = document.getElementById('searchInput');
+            const searchTerm = searchInput.value.toLowerCase();
+            const contactCards = document.querySelectorAll('.contact-card');
+            let visibleCount = 0;
+            
+            contactCards.forEach(card => {
+                const name = card.getAttribute('data-name').toLowerCase();
+                const email = card.getAttribute('data-email').toLowerCase();
+                const phone = card.getAttribute('data-phone').toLowerCase();
+                
+                if (name.includes(searchTerm) || email.includes(searchTerm) || phone.includes(searchTerm)) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Show/hide clear button
+            const clearBtn = document.querySelector('.clear-search');
+            clearBtn.style.display = searchTerm ? 'block' : 'none';
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            filterContacts();
+        }
+
+        function toggleView(viewType) {
+            const container = document.getElementById('contactsContainer');
+            const buttons = document.querySelectorAll('.view-btn');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.view-btn').classList.add('active');
+            
+            if (viewType === 'list') {
+                container.classList.add('list-view');
+            } else {
+                container.classList.remove('list-view');
+            }
+        }
+
+        function copyContact(button) {
+            const card = button.closest('.contact-card');
+            const name = card.getAttribute('data-name');
+            const email = card.getAttribute('data-email');
+            const phone = card.getAttribute('data-phone');
+            
+            const contactInfo = `${name}\nEmail: ${email}\nPhone: ${phone}`;
+            
+            navigator.clipboard.writeText(contactInfo).then(() => {
+                // Show temporary success message
+                const originalIcon = button.querySelector('i');
+                originalIcon.className = 'fas fa-check';
+                setTimeout(() => {
+                    originalIcon.className = 'fas fa-copy';
+                }, 2000);
+            });
+        }
+
+        function exportContacts() {
+            const contacts = [];
+            document.querySelectorAll('.contact-card').forEach(card => {
+                const data = card.querySelector('.contact-data');
+                if (data) {
+                    contacts.push({
+                        firstName: data.getAttribute('data-firstname'),
+                        lastName: data.getAttribute('data-lastname'),
+                        email: data.getAttribute('data-email'),
+                        phone: data.getAttribute('data-phone'),
+                        address: data.getAttribute('data-address') || ''
+                    });
+                }
+            });
+
+            // Create CSV content
+            const csvContent = [
+                ['First Name', 'Last Name', 'Email', 'Phone', 'Address'],
+                ...contacts.map(contact => [
+                    contact.firstName,
+                    contact.lastName,
+                    contact.email,
+                    contact.phone,
+                    contact.address
+                ])
+            ].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+
+            // Download CSV
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'contacts.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
