@@ -139,8 +139,10 @@
                            required 
                            maxlength="100"
                            placeholder="Enter email address (e.g., john@example.com)"
-                           title="Please enter a valid email address"
-                           oninput="validateEmailInput(this)">
+                           title="Please enter a valid email address (only letters, numbers, @ and . allowed)"
+                           oninput="validateEmailInput(this)"
+                           onkeypress="return allowOnlyEmailChars(event)"
+                           onpaste="return handleEmailPaste(event)">
                     
                     <!-- Server-side error message -->
                     <div class="error-message" th:if="${#fields.hasErrors('emailId')}" th:errors="*{emailId}">
@@ -157,7 +159,7 @@
                         <i class="fas fa-check-circle"></i>
                         Valid email address
                     </div>
-                    <div class="field-hint">Valid email format required (e.g., user@domain.com)</div>
+                    <div class="field-hint">Valid email format required (only letters, numbers, @ and . allowed)</div>
                 </div>
                 
                 <!-- Phone Field -->
@@ -265,6 +267,17 @@
             return true;
         }
         
+        // Allow only email characters (letters, numbers, @ and .)
+        function allowOnlyEmailChars(event) {
+            const char = String.fromCharCode(event.which);
+            if (!/[a-zA-Z0-9@.]/.test(char)) {
+                event.preventDefault();
+                shakeInput(event.target);
+                return false;
+            }
+            return true;
+        }
+        
         // Allow only phone characters (numbers, +, -, spaces, parentheses)
         function allowOnlyPhoneChars(event) {
             const char = String.fromCharCode(event.which);
@@ -294,6 +307,27 @@
             event.target.setSelectionRange(cursorPosition + cleanedPaste.length, cursorPosition + cleanedPaste.length);
             
             validateNameInput(event.target);
+            return false;
+        }
+        
+        // Handle paste events for email field
+        function handleEmailPaste(event) {
+            event.preventDefault();
+            const paste = (event.clipboardData || window.clipboardData).getData('text');
+            const cleanedPaste = paste.replace(/[^a-zA-Z0-9@.]/g, '');
+            
+            if (cleanedPaste !== paste) {
+                shakeInput(event.target);
+            }
+            
+            const currentValue = event.target.value;
+            const cursorPosition = event.target.selectionStart;
+            const newValue = currentValue.slice(0, cursorPosition) + cleanedPaste + currentValue.slice(event.target.selectionEnd);
+            
+            event.target.value = newValue;
+            event.target.setSelectionRange(cursorPosition + cleanedPaste.length, cursorPosition + cleanedPaste.length);
+            
+            validateEmailInput(event.target);
             return false;
         }
         
@@ -349,10 +383,11 @@
             updateFieldValidation(input, isValid, errorMessage);
         }
         
-        // Validate email input
+        // Validate email input with stricter validation
         function validateEmailInput(input) {
             const value = input.value.trim();
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            // Updated regex to only allow letters, numbers, @ and .
+            const emailRegex = /^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[a-zA-Z0-9]+$/;
             let isValid = false;
             let errorMessage = '';
             
@@ -360,8 +395,18 @@
                 errorMessage = 'Email address is required';
             } else if (value.length > 100) {
                 errorMessage = 'Email address must be less than 100 characters';
+            } else if (!/^[a-zA-Z0-9@.]+$/.test(value)) {
+                errorMessage = 'Email can only contain letters, numbers, @ and . characters';
             } else if (!emailRegex.test(value)) {
-                errorMessage = 'Please enter a valid email address';
+                errorMessage = 'Please enter a valid email address (format: user@domain.com)';
+            } else if ((value.match(/@/g) || []).length !== 1) {
+                errorMessage = 'Email must contain exactly one @ symbol';
+            } else if (!value.includes('.') || value.indexOf('.') <= value.indexOf('@')) {
+                errorMessage = 'Email must have a domain with a dot after the @ symbol';
+            } else if (value.startsWith('@') || value.startsWith('.') || value.endsWith('@') || value.endsWith('.')) {
+                errorMessage = 'Email cannot start or end with @ or . symbols';
+            } else if (value.includes('..') || value.includes('@@')) {
+                errorMessage = 'Email cannot contain consecutive @ or . symbols';
             } else {
                 isValid = true;
             }
